@@ -1,61 +1,52 @@
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 
 public class Challenge01 {
     public static void main(String[] args) {
-        Path messagePath = Paths.get("resources/message_01.txt"),
-                decryptedFile = Paths.get("resources/solutions/decryotedMessage.txt");
-        String decryptedMessage = null;
+        Path messagePath = Paths.get("resources/01/message_01.txt");
+        Path decryptedFile = Paths.get("resources/01/decryptedMessage.txt");
         try {
-            decryptedMessage = readMessage(messagePath);
+            String decryptedMessage = readMessage(messagePath);
             writeMessage(decryptedFile, decryptedMessage);
+            System.out.println(decryptedMessage);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(decryptedMessage);
     }
 
     private static String readMessage(Path pathMessage) throws IOException {
-        try (BufferedReader bufferedReader = new BufferedReader(new BufferedReader(new FileReader(String.valueOf(pathMessage))))) {
-            //Leemos el mensaje
-            String menssage = bufferedReader.readLine();
-            //Separamos las palabras con el separador de espacio en blanco
-            String[] words = menssage.toLowerCase().split(" ");
-            //Añadimos las palabras a un arrayList y comprobamos que solo añada palabras que no contiene
-            ArrayList<String> uniqueWords = new ArrayList<>();
-            uniqueWords.add(words[0]);
-            for (String word : words) {
-                if (!uniqueWords.contains(word)) {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(pathMessage.toFile()))) {
+            String line;
+            StringBuilder messageBuilder = new StringBuilder();
+
+            LinkedHashSet<String> uniqueWords = new LinkedHashSet<>();
+            HashMap<String, Integer> wordCount = new HashMap<>();
+
+            while ((line = bufferedReader.readLine()) != null) {
+                messageBuilder.append(line);
+                String[] words = line.toLowerCase().split(" ");
+                for (String word : words) {
                     uniqueWords.add(word);
+                    wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
                 }
             }
-            //Pasamos el Set a un Array para poder trabajar con sus indices
-            String[] indexUW = uniqueWords.toArray(new String[0]);
-            //Contamos cada palabra. El índice en el set es equivalente al número en el array
-            int[] wordCounted = new int[indexUW.length];
-            for (String word : words) {
-                for (int j = 0; j < indexUW.length; j++) {
-                    if (word.equals(indexUW[j])) {
-                        wordCounted[j]++;
-                        //System.out.println(indexUW[j] + " ha salido: " + wordCounted[j] + " veces.");
-                    }
-                }
+
+            StringBuilder finalMessage = new StringBuilder();
+            for (String word : uniqueWords) {
+                finalMessage.append(word).append(wordCount.get(word));
             }
-            //Finalmente, agregamos al mensaje el conteo por cada palabra
-            String finalMessage = "";
-            for (int i = 0; i < uniqueWords.size(); i++) {
-                finalMessage = finalMessage + indexUW[i] + wordCounted[i];
-            }
-            return finalMessage;
+
+            return finalMessage.toString();
         }
     }
 
     private static void writeMessage(Path outputPath, String message) throws IOException {
-        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(String.valueOf(outputPath)))) {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputPath.toFile()))) {
             bufferedWriter.write(message);
         }
     }
-
 }
+
